@@ -8,7 +8,7 @@
  *
  *               *----*
  * !Reset - PB5 =|o   |= VCC
- *   ADC3 - PB3 =|    |= PB2 - (unused)
+ *   ADC3 - PB3 =|    |= PB2 - (Button2)
  *   OC1B - PB4 =|    |= PB1 - OC1A
  *          GND =|    |= PB0 - OC0A
  *               *----* 
@@ -33,6 +33,8 @@ typedef unsigned long u32;
 
 #define DELAYT         20000
 #define nop()  __asm__ __volatile__("nop")
+
+#define REPEAT_MS   10
 
 /// Prototypes ////////
 void init (void);
@@ -67,7 +69,7 @@ int main(void)
 		}
         
 		
-		if ( millis() - time2 > 10) {
+		if ( millis() - time2 > REPEAT_MS) {
 			//PB2 reading constant for 10ms, do stuff.
 			if ( ~reading & _BV(PB2) ) {
 				//Button 2 pressed.
@@ -80,7 +82,7 @@ int main(void)
                 
 				time2 = millis(); //Restart counting so that holding the button re-triggers
 			} else {
-              // Nothing  
+              // Button 2 up  
             }
 		}
 		
@@ -135,11 +137,12 @@ void init(void)
 	 
 	TIMSK |= _BV(TOIE1); // Timer/Counter1 Overflow interrupt enabled.
 	
-	// PORTB |= _BV(PB2) | _BV(PB3); //Enable internal pullup resistors on PB2, PB3
-    
-    PORTB |= _BV(PORTB2);
+    PORTB |= _BV(PORTB2) | _BV(PORTB3); //Enable internal pullup resistors on PB2, PB3
 }
 
+/*
+ * Comment out ADC for now
+ *
 ISR(ADC_vect)
 {
 	//ADC conversion complete, execute this code and stuff.
@@ -192,7 +195,7 @@ ISR(ADC_vect)
     
     //OCR1A = ADCW >> 2;
 }
-
+*/
 #define MILLIS_INC	0
 #define FRACT_INC	256 >> 3
 #define FRACT_MAX	1000 >> 3
