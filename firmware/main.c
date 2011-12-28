@@ -232,37 +232,32 @@ unsigned long millis()
 }
 
 void color(uint16_t temp) {
-    
-    if (temp < 256) {
-        OCR0A = 255;
-        OCR1A = temp;
-        OCR1B = 0;
-    } else if (temp >= 256 && temp < 512){
-        OCR0A = 255 - (temp - 256);
-        OCR1A = 255;
-        OCR1B = 0;
-    } else if (temp >= 512 && temp < 768){
-        OCR0A = 0;
-        OCR1A = 255;
-        OCR1B = temp - 512;
-    } else if (temp >= 768 && temp < 1024){
-        OCR0A = 0;
-        OCR1A = 255 - (temp - 768);
-        OCR1B = 255;
-    } else if (temp >= 1024 && temp < 1280){
-        OCR0A = temp - 1024;
-        OCR1A = 0;
-        OCR1B = 255;
-    } else if (temp >= 1280 && temp < 1536) {
-        /*
-         OCR0A = 255;
-         OCR1A = 0;
-         OCR1B = 255 - (temp-1280);
-         */
-        OCR0A = 255;
-        OCR1A = temp-1280;
-        OCR1B = 255;
-    }
+    //OCR0A = Red
+	//OCR1A = Green
+	//OCR1B = Blue
+	
+	if (temp > MAX_COLOR) {
+		return;
+	}
+	
+	uint8_t red =   0b11100011;
+	uint8_t green = 0b10001111;
+	uint8_t blue =  0b00111001;
+	
+	uint8_t index = temp / 256;     // 0 to 6
+	uint8_t remainder = temp % 256;  // 0 to 255
+	
+	//(red >> (6-index)) & 0b11
+	// Four possible transitions
+	// 00 = 0 , 0
+	// 01 = 1 , 0 + remainder
+	// 10 = 2 , 255 - remainder
+	// 11 = 3 , 255
+	
+	OCR0A = 255 * (red>>(7-index) & 0b1) + remainder * ((red>>(6-index) & 0b1) - (red>>(7-index) & 0b1));
+	OCR1A = 255 * (green>>(7-index) & 0b1) + remainder * ((green>>(6-index) & 0b1) - (green>>(7-index) & 0b1));
+	OCR1B = 255 * (blue>>(7-index) & 0b1) + remainder * ((blue>>(6-index) & 0b1) - (blue>>(7-index) & 0b1));
+	
 }
 
 void Delay(u32 count) {
