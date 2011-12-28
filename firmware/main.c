@@ -21,6 +21,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <avr/eeprom.h>
 
 /// Typedefs //////////
 typedef unsigned char u8;
@@ -35,12 +36,16 @@ typedef unsigned long u32;
 #define nop()  __asm__ __volatile__("nop")
 
 #define REPEAT_MS   10
+#define EEPROM_MS	5000
+#define MAX_COLOR	1535
 
 /// Prototypes ////////
 void init (void);
 unsigned long millis();
 void Delay (u32 count);
+void color(uint16_t temp);
 
+uint16_t EEMEM storedColor = 0;
 
 int main(void)
 {
@@ -48,9 +53,14 @@ int main(void)
     uint8_t reading;
 	uint8_t previous = 0;
 	unsigned long time2 = 0;
-	//unsigned long time3 = 0;
+	unsigned long time3 = 0;
+	uint8_t writeFlag = 0;
     
-    uint16_t i = 0;
+    uint16_t i;
+	i = eeprom_read_word(&storedColor);
+	if (i > MAX_COLOR) {
+		i = MAX_COLOR;
+	}
     color(i);
     
     init();
@@ -74,17 +84,55 @@ int main(void)
 			if ( ~reading & _BV(PB2) ) {
 				//Button 2 pressed.
                 
-                if (++i >= 1536) {
-                    i = 0;
+                if (++i > MAX_COLOR) {
+                    i = MAX_COLOR;
                 }
                 
                 color(i);
+				writeFlag = 1;
                 
 				time2 = millis(); //Restart counting so that holding the button re-triggers
 			} else {
               // Button 2 up  
             }
 		}
+		
+		
+		
+		if ( (reading & _BV(PB3)) != (previous & _BV(PB3)) ) {
+			// Edge detected, restart counting
+			time3 = millis();
+		}
+        
+		
+		if ( millis() - time3 > REPEAT_MS) {
+			//PB3 reading constant for 10ms, do stuff.
+			if ( ~reading & _BV(PB3) ) {
+				//Button 3 pressed.
+                
+                if (i != 0) {
+                    i--;
+                }
+                
+                color(i);
+				writeFlag = 1;
+                
+				time3 = millis(); //Restart counting so that holding the button re-triggers
+			} else {
+              // Button 3 up  
+            }
+		}
+		
+		
+		if (millis() - time2 > EEPROM_MS && millis() - time3 > EEPROM_MS) {
+			if (reading & (_BV(PB2) | _BV(PB3)) && writeFlag == 1) {
+				//Both buttons up and writeFlag is set
+				
+				//eeprom_write_word(&storedColor,i);
+				writeFlag = 0;
+			}
+		}
+	
 		
 		previous = reading;
     }
@@ -140,62 +188,6 @@ void init(void)
     PORTB |= _BV(PORTB2) | _BV(PORTB3); //Enable internal pullup resistors on PB2, PB3
 }
 
-/*
- * Comment out ADC for now
- *
-ISR(ADC_vect)
-{
-	//ADC conversion complete, execute this code and stuff.
-	//ADC readout is in ADCW (ADC Word), 10 bits.
-    
-    /*
-     * OCR0A = Red
-     * OCR1A = Green
-     * OCR1B = Blue
-     */
-    
-    u16 temp = (ADCW*3)>>1;
-    
-    if (temp < 256) {
-        OCR0A = 255;
-        OCR1A = temp;
-        OCR1B = 0;
-    } else if (temp >= 256 && temp < 512){
-        OCR0A = 255 - (temp - 256);
-        OCR1A = 255;
-        OCR1B = 0;
-    } else if (temp >= 512 && temp < 768){
-        OCR0A = 0;
-        OCR1A = 255;
-        OCR1B = temp - 512;
-    } else if (temp >= 768 && temp < 1024){
-        OCR0A = 0;
-        OCR1A = 255 - (temp - 768);
-        OCR1B = 255;
-    } else if (temp >= 1024 && temp < 1280){
-        OCR0A = temp - 1024;
-        OCR1A = 0;
-        OCR1B = 255;
-    } else if (temp >= 1280 && temp < 1536) {
-        /*
-        OCR0A = 255;
-        OCR1A = 0;
-        OCR1B = 255 - (temp-1280);
-         */
-        OCR0A = 255;
-        OCR1A = temp-1280;
-        OCR1B = 255;
-    }
-    
-    // Todo: toggle LED on each ISR call.  Blinking will mean something else happened.
-    
-    //PORTB ^= _BV(PORTB2);
-    
-    Delay(10); // 1 and 2  cause hangups, 3 does not.  WHY!?
-    
-    //OCR1A = ADCW >> 2;
-}
-*/
 #define MILLIS_INC	0
 #define FRACT_INC	256 >> 3
 #define FRACT_MAX	1000 >> 3
