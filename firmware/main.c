@@ -20,7 +20,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
+//#include <util/delay.h>
 #include <avr/eeprom.h>
 
 /// Typedefs //////////
@@ -37,12 +37,12 @@ typedef unsigned long u32;
 
 #define REPEAT_MS   10
 #define EEPROM_MS	5000
-#define MAX_COLOR	1535
+#define MAX_COLOR	7*256 - 1
 
 /// Prototypes ////////
 void init (void);
 unsigned long millis();
-void Delay (u32 count);
+//void Delay (u32 count);
 void color(uint16_t temp);
 
 uint16_t EEMEM storedColor = 0;
@@ -128,7 +128,7 @@ int main(void)
 			if (reading & (_BV(PB2) | _BV(PB3)) && writeFlag == 1) {
 				//Both buttons up and writeFlag is set
 				
-				//eeprom_write_word(&storedColor,i);
+				eeprom_write_word(&storedColor,i);
 				writeFlag = 0;
 			}
 		}
@@ -260,9 +260,11 @@ void color(uint16_t temp) {
 	
 }
 
+/*
 void Delay(u32 count) {
 	while (count >0) {
 		count--;
 		nop();
 	}
 }
+*/
