@@ -1,21 +1,38 @@
-/* Name: main.c
- * Author: <insert your name here>
- * Copyright: <insert your copyright message here>
- * License: <insert your license reference here>
+/* Name: main.c - An AVR RGB color selector
+ * 
+ *
+ * Copyright (C) 2011 Michael Wren
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
  
 /* Current Layout:
  *
  *               *----*
  * !Reset - PB5 =|o   |= VCC
- *   ADC3 - PB3 =|    |= PB2 - (Button2)
+ *Button3 - PB3 =|    |= PB2 - Button2
  *   OC1B - PB4 =|    |= PB1 - OC1A
  *          GND =|    |= PB0 - OC0A
  *               *----* 
  *
- * OC0A = Red
- * OC1A = Green
- * OC1B = Blue
+ * OC0A pin5 = Blue
+ * OC1A pin6 = Green
+ * OC1B pin3 = Red
+ * 
+ * PB2  Button2 pin7 = incriment color
+ * PB3  Button3 pin2 = decriment color
  */
 
 #include <avr/io.h>
@@ -65,7 +82,7 @@ int main(void)
     
     init();
 	
-    while (1)
+    for (;;)
     {
 		// Buttons on PB2, PB3
 		
@@ -199,6 +216,7 @@ static unsigned char timer0_fract = 0;
 ISR(TIMER1_OVF_vect)
 {
 // Arduino millis() https://github.com/arduino/Arduino/blob/master/hardware/arduino/cores/arduino/wiring.c
+// Which is LGPL
 
 	// copy these to local variables so they can be stored in registers
 	// (volatile variables must be read from memory on every access)
@@ -232,10 +250,10 @@ unsigned long millis()
 }
 
 void color(uint16_t temp) {
-    //OCR0A = Red
-	//OCR1A = Green
-	//OCR1B = Blue
-	
+	// OC1B pin3 = Red
+	// OC1A pin6 = Green
+	// OC0A pin5 = Blue
+ 
 	if (temp > MAX_COLOR) {
 		return;
 	}
@@ -244,7 +262,7 @@ void color(uint16_t temp) {
 	uint8_t green = 0b10001111;
 	uint8_t blue =  0b00111001;
 	
-	uint8_t index = temp / 256;     // 0 to 6
+	uint8_t index = temp / 256;     // 0 to 6, equivilent to temp >> 8
 	uint8_t remainder = temp % 256;  // 0 to 255
 	
 	//(red >> (6-index)) & 0b11
@@ -254,9 +272,11 @@ void color(uint16_t temp) {
 	// 10 = 2 , 255 - remainder
 	// 11 = 3 , 255
 	
-	OCR0A = 255 * (red>>(7-index) & 0b1) + remainder * ((red>>(6-index) & 0b1) - (red>>(7-index) & 0b1));
-	OCR1A = 255 * (green>>(7-index) & 0b1) + remainder * ((green>>(6-index) & 0b1) - (green>>(7-index) & 0b1));
-	OCR1B = 255 * (blue>>(7-index) & 0b1) + remainder * ((blue>>(6-index) & 0b1) - (blue>>(7-index) & 0b1));
+	// The following three lines take 300 bytes of code.
+	
+	OCR1B = 255 * (red>>(7-index) & 0b1) + remainder * ((red>>(6-index) & 0b1) - (red>>(7-index) & 0b1));	
+	OCR1A = 255 * (green>>(7-index) & 0b1) + remainder * ((green>>(6-index) & 0b1) - (green>>(7-index) & 0b1)); 
+	OCR0A = 255 * (blue>>(7-index) & 0b1) + remainder * ((blue>>(6-index) & 0b1) - (blue>>(7-index) & 0b1));
 	
 }
 
