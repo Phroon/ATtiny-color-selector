@@ -1,7 +1,7 @@
 /* Name: main.c - An AVR RGB color selector
  * 
  *
- * Copyright (C) 2011 Michael Wren
+ * Copyright (C) 2011-2012 Michael Wren
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,6 +39,7 @@
 #include <avr/interrupt.h>
 //#include <util/delay.h>
 #include <avr/eeprom.h>
+#include <math.h>
 
 /// Typedefs //////////
 typedef unsigned char u8;
@@ -249,6 +250,10 @@ unsigned long millis()
 	return m;
 }
 
+#define SLOPE 0.01
+#define N_CALC 21.5971
+#define C_CALC -N_CALC
+
 void color(uint16_t temp) {
 	// OC1B pin3 = Red
 	// OC1A pin6 = Green
@@ -267,16 +272,16 @@ void color(uint16_t temp) {
 	
 	//(red >> (6-index)) & 0b11
 	// Four possible transitions
-	// 00 = 0 , 0
-	// 01 = 1 , 0 + remainder
-	// 10 = 2 , 255 - remainder
-	// 11 = 3 , 255
-	
+    // 00 = 0 , 0
+    // 01 = 1 , 0 + C_CALC * exp ( SLOPE * remainder ) + N_CALC
+    // 10 = 2 , 255 - C_CALC * exp ( SLOPE * remainder ) + N_CALC
+    // 11 = 3 , 255
+    
 	// The following three lines take 300 bytes of code.
 	
-	OCR1B = 255 * (red>>(7-index) & 0b1) + remainder * ((red>>(6-index) & 0b1) - (red>>(7-index) & 0b1));	
-	OCR1A = 255 * (green>>(7-index) & 0b1) + remainder * ((green>>(6-index) & 0b1) - (green>>(7-index) & 0b1)); 
-	OCR0A = 255 * (blue>>(7-index) & 0b1) + remainder * ((blue>>(6-index) & 0b1) - (blue>>(7-index) & 0b1));
+	OCR1B = 255 * (red>>(7-index) & 0b1) + (N_CALC * exp ( SLOPE * remainder ) + C_CALC) * ((red>>(6-index) & 0b1) - (red>>(7-index) & 0b1));	
+	OCR1A = 255 * (green>>(7-index) & 0b1) + (N_CALC * exp ( SLOPE * remainder ) + C_CALC) * ((green>>(6-index) & 0b1) - (green>>(7-index) & 0b1)); 
+	OCR0A = 255 * (blue>>(7-index) & 0b1) + (N_CALC * exp ( SLOPE * remainder ) + C_CALC) * ((blue>>(6-index) & 0b1) - (blue>>(7-index) & 0b1));
 	
 }
 
