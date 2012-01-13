@@ -39,7 +39,6 @@
 #include <avr/interrupt.h>
 //#include <util/delay.h>
 #include <avr/eeprom.h>
-#include <math.h>
 
 /// Typedefs //////////
 typedef unsigned char u8;
@@ -251,10 +250,6 @@ unsigned long millis()
 
 	return m;
 }
-
-#define SLOPE 0.01
-#define N_CALC 21.5971
-#define C_CALC -N_CALC
 
 void color(uint16_t temp) {
 	// OC1B pin3 = Red
