@@ -1,0 +1,10 @@
+# 
+.DS_Store*
+
+# AVR compiled output
+*.elf
+*.hex
+*.o
+
+# C compiled output
+a.out
