@@ -259,9 +259,9 @@ void color(uint16_t temp) {
 	if (temp > MAX_COLOR) {
 		return;
 	}
-	
-	uint8_t red =   0b11100011;
-	uint8_t green = 0b10001111;
+
+	uint8_t red =   0b10001111;
+	uint8_t green = 0b11100011;
 	uint8_t blue =  0b00111001;
 	
 	uint8_t index = temp / 256;     // 0 to 6, equivilent to temp >> 8
