@@ -17,7 +17,8 @@
 DEVICE     = attiny85
 CLOCK      = 1000000
 # PROGRAMMER = -c stk500v2 -P avrdoper
-PROGRAMMER = -p t85 -c avrisp -b 19200 -P /dev/tty.usbserial-A6008eGn 
+# PROGRAMMER = -p t85 -c avrisp -b 19200 -P /dev/tty.usbserial-A6008eGn 
+PROGRAMMER = -p t85 -c avrispv2 -P usb
 
 OBJECTS    = main.o
 # FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0x24:m
